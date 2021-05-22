@@ -1,6 +1,7 @@
 from pymisp import ExpandedPyMISP, PyMISP, MISPEvent, MISPAttribute
 from keys import misp_url, misp_key, misp_verifycert
 from pathlib import Path
+import os
 
 """
     Short description of the created event
@@ -43,6 +44,10 @@ class MispEvent():
             for event in result:
                 uuid = event['Event']['uuid']
 
+        """tlp:white TAG"""
+        self.pymisp.tag(uuid, 3)
+
+        """ecsirt:intrusions='backdoor' TAG"""
         self.pymisp.tag(uuid, 574)
         return event
 
@@ -91,11 +96,16 @@ class MispEvent():
             This file can be interpreted as: 1. PDF    2. malware    3. string
         """
         p = Path(data)
+        print(p.is_file())
         if p.is_file() and data.endswith('.pdf'):
+            print("PDF")
             self.upload_file(data=data, is_malware=False, event_id=misp_event['Event']['id'])
         elif p.is_file() and data.endswith('.zip'):
+            print("ZIP")
             self.upload_file(data=data, is_malware=True, event_id=misp_event['Event']['id'])
         else:
-            result = self.pymisp.freetext(misp_event['Event']['id'], data)
+            print("FREETEXT")
+            filename = os.path.basename(data)
+            result = self.pymisp.freetext(misp_event['Event']['id'], filename)
 
 

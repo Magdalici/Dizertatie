@@ -1,11 +1,15 @@
 import time
+import os
 from queue import Queue
 from threading import Thread
 from misp_data import MispEvent
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
-PATHTOBEOBSERVED = '.'
+
+
+""" Use . to monitor the current directory """
+PATHTOBEOBSERVED = '/home/magda/Documents/Master/Dizertatie/Attacker_env'
 
 
 """
