@@ -52,7 +52,7 @@ def on_moved(event):
     print(f"Someone moved {event.src_path} to {event.dest_path}")
 
 
-def get_data_from_queue(queue, misp_event, pymisp):
+def get_data_from_queue(queue, pymisp):
     """
         Function used to extract data from the queue and upload it to MISP
     """
@@ -62,7 +62,7 @@ def get_data_from_queue(queue, misp_event, pymisp):
             print("Evenimentul")
             print(event)
             data = event.src_path.replace('./', '')
-            pymisp.load_data_on_misp(data, misp_event)
+            pymisp.load_data_on_misp(data)
         else:
             time.sleep(1)
 
@@ -86,9 +86,8 @@ def main():
 
     my_queue = Queue()
     pymisp = MispEvent()
-    misp_event = pymisp.create_new_event()
 
-    worker = Thread(target=get_data_from_queue, args=(my_queue, misp_event, pymisp,))
+    worker = Thread(target=get_data_from_queue, args=(my_queue, pymisp,))
     worker.setDaemon(True)
     worker.start()
 
