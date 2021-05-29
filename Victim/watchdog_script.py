@@ -9,7 +9,7 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 """ Use . to monitor the current directory """
-PATHTOBEOBSERVED = '/home/magda/Documents/Master/Dizertatie/Attacker_env'
+observed_path = '/home/magda/Documents/Master/Dizertatie/Attacker_env'
 
 
 """
@@ -59,8 +59,6 @@ def get_data_from_queue(queue, pymisp):
     while True:
         if not queue.empty():
             event = queue.get()
-            print("Evenimentul")
-            print(event)
             data = event.src_path.replace('./', '')
             pymisp.load_data_on_misp(data)
         else:
@@ -77,12 +75,6 @@ def main():
     ignore_patterns = ["*.swp"]
     ignore_directories = False
     case_sensitive = True
-    '''my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-
-    my_event_handler.on_created = on_created
-    my_event_handler.on_deleted = on_deleted
-    my_event_handler.on_modified = on_modified
-    my_event_handler.on_moved = on_moved'''
 
     my_queue = Queue()
     pymisp = MispEvent()
@@ -96,7 +88,7 @@ def main():
                                           ignore_patterns,
                                           ignore_directories,
                                           case_sensitive)
-    path = PATHTOBEOBSERVED
+    path = observed_path
     go_recursively = True
 
     my_observer = Observer()
