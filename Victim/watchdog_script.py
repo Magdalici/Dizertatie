@@ -1,16 +1,16 @@
+import re
 import time
 import os
+import subprocess
 from queue import Queue
+from subprocess import TimeoutExpired
 from threading import Thread
 from misp_data import MispEvent
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
-
-
 """ Use . to monitor the current directory """
 observed_path = '/home/magda/Documents/Master/Dizertatie/Attacker_env'
-
 
 """
     This class inherits the PatternMatchingEventHandler to match the given patterns with the identified files
@@ -52,6 +52,23 @@ def on_moved(event):
     print(f"Someone moved {event.src_path} to {event.dest_path}")
 
 
+def find_ip_address():
+    """
+        Function used to find ip address of the attacker
+        declaring the regex pattern for IP addresses
+    """
+    pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+    command = ["lsof", "-i"]
+    lsof = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    while True:
+        line = lsof.stdout.readline()
+        if not line:
+            break
+        if 'pygame' in str(line):
+            return pattern.search(str(line))[0]
+
+
 def get_data_from_queue(queue, pymisp):
     """
         Function used to extract data from the queue and upload it to MISP
@@ -78,6 +95,10 @@ def main():
 
     my_queue = Queue()
     pymisp = MispEvent()
+
+    ip_addr = find_ip_address()
+    if ip_addr:
+        pymisp.load_data_on_misp(ip_addr)
 
     worker = Thread(target=get_data_from_queue, args=(my_queue, pymisp,))
     worker.setDaemon(True)

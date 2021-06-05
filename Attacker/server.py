@@ -118,8 +118,8 @@ def main():
     global host
     global port
     try:
-        host = input("Enter your local host IP > ")
-        print("Set LHOST: %s" % host)
+        host = "192.168.56.3"
+        #print("Set LHOST: %s" % host)
         port = 9999
         create_socket()
     except Exception as e:

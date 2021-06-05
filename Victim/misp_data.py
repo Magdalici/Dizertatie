@@ -1,12 +1,15 @@
+import re
+import subprocess
+
 from pymisp import ExpandedPyMISP, PyMISP, MISPEvent, MISPAttribute, MISPObject, InvalidMISPObject
 from keys import misp_url, misp_key, misp_verifycert
 from pathlib import Path
-import os, math, zipfile
+import os, math
 from io import BytesIO
 from collections import Counter
 from hashlib import md5, sha1, sha256, sha512
 import imghdr
-import dateutil
+import statistics
 
 try:
     import magic  # type: ignore
@@ -19,9 +22,9 @@ except ImportError:
     Short description of the created event
 """
 distribution = None  # Optional, defaults to MISP.default_event_distribution in MISP config
-threat_level_id = 1  # Optional, defaults to MISP.default_event_threat_level in MISP config
-analysis = None  # Optional, defaults to 0 (initial analysis)
-info = "This event is related to a backdoor attack"
+threat_level_id = 4  # No risk
+analysis = None  # default to 0- initial analysis
+info = "This event is related to a suspicious activity"
 
 """
     This class is used to manage all MISP information
@@ -157,7 +160,8 @@ class MispEvent:
             exit(0)
 
         """
-            zip file is treated as a malware - one attribute ; rest of files are treated as object
+            zip file is treated as a malware - one attribute; images as attachment; 
+            rest of files are treated as object
         """
         for f in files:
             f_extension = imghdr.what(f)
@@ -170,15 +174,36 @@ class MispEvent:
             else:
                 self.create_objects(f)
 
+        self.update_thread_level_id()
+
+    def update_thread_level_id(self):
+        """
+           Function used to calculate the average thread level id based on the threat level from related events
+        """
+        thread_level_id_list = []
+        event_info_dict = self.pymisp.get_event(self.event.id)
+        data = event_info_dict['Event']
+        for event in data['RelatedEvent']:
+            if event:
+                thread_level_id_list.append(int(event['Event']['threat_level_id']))
+        if thread_level_id_list:
+            new_threat_level_id = math.trunc(statistics.mean(thread_level_id_list))
+            self.event.threat_level_id = new_threat_level_id
+
+            print("Thread_level_id evenimentelor corelate sunt: ")
+            print(thread_level_id_list)
+            print(math.trunc(statistics.mean(thread_level_id_list)))
+
+            self.pymisp.update_event(self.event)
+
     def load_data_on_misp(self, data):
         """
             Function used to upload file as an attribute for a specific event
-            This file can be interpreted as: 1. zip file managed as malware   2. document    3. string
         """
         filepath = Path(data)
 
         if filepath.is_file():
             self.upload_file(data=data)
         else:
-            filename = os.path.basename(data)
-            self.pymisp.freetext(self.event.id, filename)
+            self.pymisp.freetext(self.event.id, data)
+

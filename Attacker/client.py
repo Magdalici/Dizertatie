@@ -83,7 +83,7 @@ def connect_to_server():
         global host
         global port
         global s
-        host = "192.168.0.45"
+        host = "192.168.56.3"
         port = 9999
         s = socket.socket()
         s.connect((host, port))
