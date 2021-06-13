@@ -36,10 +36,6 @@ class MispLoaderWatchdog(PatternMatchingEventHandler):
         self.add(event)
 
 
-def on_created(event):
-    print(f"{event.src_path} has been created!")
-
-
 def on_deleted(event):
     print(f"Someone deleted {event.src_path}!")
 
@@ -77,6 +73,7 @@ def get_data_from_queue(queue, pymisp):
         if not queue.empty():
             event = queue.get()
             data = event.src_path.replace('./', '')
+            print(queue)
             pymisp.load_data_on_misp(data)
         else:
             time.sleep(1)
@@ -90,7 +87,7 @@ def main():
     """
     patterns = "*"
     ignore_patterns = ["*.swp"]
-    ignore_directories = False
+    ignore_directories = True # want to be notified just for regular files
     case_sensitive = True
 
     my_queue = Queue()
@@ -98,6 +95,7 @@ def main():
 
     ip_addr = find_ip_address()
     if ip_addr:
+        #ip_addr = "185.130.104.182"
         pymisp.load_data_on_misp(ip_addr)
 
     worker = Thread(target=get_data_from_queue, args=(my_queue, pymisp,))
