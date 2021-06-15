@@ -95,7 +95,7 @@ def main():
 
     ip_addr = find_ip_address()
     if ip_addr:
-        #ip_addr = "185.130.104.182"
+        ip_addr = "67.215.253.139"
         pymisp.load_data_on_misp(ip_addr)
 
     worker = Thread(target=get_data_from_queue, args=(my_queue, pymisp,))

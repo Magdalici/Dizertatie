@@ -42,7 +42,7 @@ class MispEvent:
 
     def __init__(self):
         self.pymisp = ExpandedPyMISP(misp_url, misp_key, misp_verifycert)
-        self.exe = None
+        self.exe = '/home/magda/Documents/Master/Dizertatie/Attacker_env/pygame/dist/pygame'
 
     def create_new_event(self):
         """
@@ -64,24 +64,23 @@ class MispEvent:
 
         return event
 
-    def create_attributes(self,event,  files, type, tags):
+    def create_attributes(self,event,  f, type, tags):
         """
             Function used to create attributes for added files
         """
 
-        for f in files:
-            a = MISPAttribute()
-            a.type = type
-            a.value = f.name
-            a.data = f
-            a.distribution = distribution
+        a = MISPAttribute()
+        a.type = type
+        a.value = f.name
+        a.data = f
+        a.distribution = distribution
 
-            attr = self.pymisp.add_attribute(event.id, a)
+        attr = self.pymisp.add_attribute(event.id, a)
 
-            if type == 'malware-sample':
-                self.pymisp.tag(attr['Attribute']['uuid'], tags)
+        if type == 'malware-sample':
+            self.pymisp.tag(attr['Attribute']['uuid'], tags)
 
-            self.pymisp.update_event(event)
+        self.pymisp.update_event(event)
 
     def create_objects(self, event, filepath):
         """
@@ -160,15 +159,14 @@ class MispEvent:
             zip file is treated as a malware - one attribute; images as attachment; 
             rest of files are treated as object
         """
-        print(files)
         for f in files:
             f_extension = imghdr.what(f)
-            print(f_extension)
+
             event = self.create_new_event()
             if f_extension in extensions:
-                self.create_attributes(event, files, type="attachment", tags='')
+                self.create_attributes(event, f, type="attachment", tags='')
             elif str(f).endswith('.zip'):
-                self.create_attributes(event, files, type="malware-sample",
+                self.create_attributes(event, f, type="malware-sample",
                                        tags='malware_classification:malware-category="Trojan"')
             else:
                 self.create_objects(event, f)
@@ -183,10 +181,12 @@ class MispEvent:
         event_info_dict = self.pymisp.get_event(event.id)
         data = event_info_dict['Event']
         corelated_event = False
+
         for event_related in data['RelatedEvent']:
             if event_related:
                 corelated_event = True
                 thread_level_id_list.append(int(event_related['Event']['threat_level_id']))
+
         if thread_level_id_list:
             new_threat_level_id = math.trunc(statistics.mean(thread_level_id_list))
             event.threat_level_id = new_threat_level_id
@@ -199,6 +199,9 @@ class MispEvent:
         self.get_decision(event.threat_level_id, corelated_event)
 
     def get_decision(self, thread_level, corelated):
+        """
+            Function used to take a decision based on the thread level id
+        """
         if thread_level == 4:
             if corelated:
                 self.helper.notify("WARNING", "This event is correlated but with undefined/unknown level of risk")
