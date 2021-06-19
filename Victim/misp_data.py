@@ -146,7 +146,7 @@ class MispEvent:
                     self.exe = f
                 self.create_objects(event, f)
 
-            self.update_thread_level_id(event)
+            self.update_thread_level_id(event, f)
 
     def upload_file(self, data):
         """
@@ -171,9 +171,9 @@ class MispEvent:
             else:
                 self.create_objects(event, f)
 
-        self.update_thread_level_id(event)
+        self.update_thread_level_id(event, f)
 
-    def update_thread_level_id(self, event):
+    def update_thread_level_id(self, event, file):
         """
            Function used to calculate the average thread level id based on the threat level from related events
         """
@@ -185,6 +185,8 @@ class MispEvent:
         for event_related in data['RelatedEvent']:
             if event_related:
                 corelated_event = True
+                print(event_related)
+                print(event_related['Event']['id'])
                 thread_level_id_list.append(int(event_related['Event']['threat_level_id']))
 
         if thread_level_id_list:
@@ -196,9 +198,9 @@ class MispEvent:
             print(math.trunc(statistics.mean(thread_level_id_list)))
 
             self.pymisp.update_event(event)
-        self.get_decision(event.threat_level_id, corelated_event)
+        self.get_decision(event.threat_level_id, corelated_event, file)
 
-    def get_decision(self, thread_level, corelated):
+    def get_decision(self, thread_level, corelated, file):
         """
             Function used to take a decision based on the thread level id
         """
@@ -212,10 +214,10 @@ class MispEvent:
             self.helper.remove_exe_immutable(self.exe)
         elif thread_level == 2:
             self.helper.notify("Medium risk", "This event has related events with risk level 2")
-            self.helper.kill_process()
+            self.helper.kill_process(self.exe)
         else:
             self.helper.notify("High risk", "This event has related events with risk level 1")
-            self.helper.kill_process_remove_directory(PATH_PYGAME)
+            self.helper.kill_process_remove_file(self.exe, file)
 
 
 

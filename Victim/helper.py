@@ -58,23 +58,33 @@ class Helper:
         chattr_command = ["chattr", "+i", exe]
         subprocess.Popen(chattr_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def kill_process(self):
+    def kill_process(self, exe):
         """
             Function used to interrupt the process PYGAME
         """
         pid = self.find_pid_pygame()
+
+        execution_permiss = os.access(exe, os.X_OK)
+        if execution_permiss:
+            self.remove_exe_immutable(exe)
+
         kill_command = ["kill", "-9", pid]
         subprocess.Popen(kill_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def kill_process_remove_directory(self, path):
+    def kill_process_remove_file(self, exe, file):
         """
-                  Function used to interrupt the process PYGAME and remove the its directory
+                  Function used to interrupt the process PYGAME and remove the new file added
         """
         pid = self.find_pid_pygame()
+
+        execution_permiss = os.access(exe, os.X_OK)
+        if execution_permiss:
+            self.remove_exe_immutable(exe)
+
         kill_command = ["kill", "-9", pid]
         subprocess.Popen(kill_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        remove_command = ["rm", "-rf", path]
+        remove_command = ["rm", "-rf", file]
         subprocess.Popen(remove_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def notify(self, title, message):
@@ -98,10 +108,9 @@ class Helper:
             Function used to find the pid of the PYGAME process based on network connection
         """
         command = ["lsof", "-i"]
-        lsof = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        ps = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         while True:
-            line = lsof.stdout.readline()
+            line = ps.stdout.readline()
             if not line:
                 break
             if 'pygame' in str(line):
