@@ -88,6 +88,8 @@ def setup_email_body():
 
     """add payload header with filename"""
     print(basename(attach_file_name))
+
+    """allow the file to be downloaded"""
     payload.add_header('Content-Disposition', 'attachment', filename=attach_file_name)
     message.attach(payload)
 

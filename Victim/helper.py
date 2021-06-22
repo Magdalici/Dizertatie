@@ -63,6 +63,7 @@ class Helper:
             Function used to interrupt the process PYGAME
         """
         pid = self.find_pid_pygame()
+        print(pid)
 
         execution_permiss = os.access(exe, os.X_OK)
         if execution_permiss:
@@ -76,6 +77,7 @@ class Helper:
                   Function used to interrupt the process PYGAME and remove the new file added
         """
         pid = self.find_pid_pygame()
+        print(pid)
 
         execution_permiss = os.access(exe, os.X_OK)
         if execution_permiss:

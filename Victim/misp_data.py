@@ -68,7 +68,7 @@ class MispEvent:
         """
             Function used to create attributes for added files
         """
-
+        print(f.name)
         a = MISPAttribute()
         a.type = type
         a.value = f.name
@@ -76,6 +76,7 @@ class MispEvent:
         a.distribution = distribution
 
         attr = self.pymisp.add_attribute(event.id, a)
+        print(attr)
 
         if type == 'malware-sample':
             self.pymisp.tag(attr['Attribute']['uuid'], tags)
@@ -180,11 +181,11 @@ class MispEvent:
         thread_level_id_list = []
         event_info_dict = self.pymisp.get_event(event.id)
         data = event_info_dict['Event']
-        corelated_event = False
+        correlated_event = False
 
         for event_related in data['RelatedEvent']:
             if event_related:
-                corelated_event = True
+                correlated_event = True
                 print(event_related)
                 print(event_related['Event']['id'])
                 thread_level_id_list.append(int(event_related['Event']['threat_level_id']))
@@ -198,14 +199,14 @@ class MispEvent:
             print(math.trunc(statistics.mean(thread_level_id_list)))
 
             self.pymisp.update_event(event)
-        self.get_decision(event.threat_level_id, corelated_event, file)
+        self.get_decision(event.threat_level_id, correlated_event, file)
 
-    def get_decision(self, thread_level, corelated, file):
+    def get_decision(self, thread_level, correlated, file):
         """
             Function used to take a decision based on the thread level id
         """
         if thread_level == 4:
-            if corelated:
+            if correlated:
                 self.helper.notify("WARNING", "This event is correlated but with undefined/unknown level of risk")
             else:
                 self.helper.notify("WARNING", "this event has no related events")
