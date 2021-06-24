@@ -147,7 +147,7 @@ class MispEvent:
                     self.exe = f
                 self.create_objects(event, f)
 
-            self.update_thread_level_id(event, f)
+            self.update_threat_level_id(event, f)
 
     def upload_file(self, data):
         """
@@ -172,13 +172,13 @@ class MispEvent:
             else:
                 self.create_objects(event, f)
 
-        self.update_thread_level_id(event, f)
+        self.update_threat_level_id(event, f)
 
-    def update_thread_level_id(self, event, file):
+    def update_threat_level_id(self, event, file):
         """
-           Function used to calculate the average thread level id based on the threat level from related events
+           Function used to calculate the average threat level id based on the threat level from related events
         """
-        thread_level_id_list = []
+        threat_level_id_list = []
         event_info_dict = self.pymisp.get_event(event.id)
         data = event_info_dict['Event']
         correlated_event = False
@@ -188,32 +188,32 @@ class MispEvent:
                 correlated_event = True
                 print(event_related)
                 print(event_related['Event']['id'])
-                thread_level_id_list.append(int(event_related['Event']['threat_level_id']))
+                threat_level_id_list.append(int(event_related['Event']['threat_level_id']))
 
-        if thread_level_id_list:
-            new_threat_level_id = math.trunc(statistics.mean(thread_level_id_list))
+        if threat_level_id_list:
+            new_threat_level_id = math.trunc(statistics.mean(threat_level_id_list))
             event.threat_level_id = new_threat_level_id
 
-            print("Thread_level_id evenimentelor corelate sunt: ")
-            print(thread_level_id_list)
-            print(math.trunc(statistics.mean(thread_level_id_list)))
+            print("Threat_level_id evenimentelor corelate sunt: ")
+            print(threat_level_id_list)
+            print(math.trunc(statistics.mean(threat_level_id_list)))
 
             self.pymisp.update_event(event)
         self.get_decision(event.threat_level_id, correlated_event, file)
 
-    def get_decision(self, thread_level, correlated, file):
+    def get_decision(self, threat_level, correlated, file):
         """
-            Function used to take a decision based on the thread level id
+            Function used to take a decision based on the threat level id
         """
-        if thread_level == 4:
+        if threat_level == 4:
             if correlated:
                 self.helper.notify("WARNING", "This event is correlated but with undefined/unknown level of risk")
             else:
                 self.helper.notify("WARNING", "this event has no related events")
-        elif thread_level == 3:
+        elif threat_level == 3:
             self.helper.notify("Low risk", "This event has related events with risk level 3")
             self.helper.remove_exe_immutable(self.exe)
-        elif thread_level == 2:
+        elif threat_level == 2:
             self.helper.notify("Medium risk", "This event has related events with risk level 2")
             self.helper.kill_process(self.exe)
         else:
