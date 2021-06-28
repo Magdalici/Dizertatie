@@ -86,20 +86,21 @@ def setup_email_body():
     """encode the attachment"""
     encoders.encode_base64(payload) 
 
-    """add payload header with filename"""
     print(basename(attach_file_name))
 
-    """allow the file to be downloaded"""
+    """add payload header with filename; allow the file to be downloaded"""
     payload.add_header('Content-Disposition', 'attachment', filename=attach_file_name)
     message.attach(payload)
 
 
 def send_email():
     """Function used to create SMTP session for sending the mail use gmail with port"""
-    session = smtplib.SMTP('smtp.gmail.com', 587) 
+
+
+    session = smtplib.SMTP('smtp.gmail.com', 587)
     
     """ enable security """
-    session.starttls() 
+    session.starttls()
 
     print(sender_address + ", " + sender_pass)
 
